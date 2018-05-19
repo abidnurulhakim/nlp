@@ -11,7 +11,7 @@ import (
 	"github.com/cdipaolo/goml/text"
 )
 
-const savedNL = `{"m":[{"t":"github.com/itrabbit/nlp.T","e":[[{"l":true,"v":"c3RyaW5n"},{"v":"U3RyaW5n"}],[{"l":true,"v":"aW50"},{"v":"SW50","f":1}],[{"l":true,"v":"dWludA=="},{"v":"VWludA==","f":2}],[{"l":true,"v":"ZmxvYXQ="},{"v":"RmxvYXQ=","f":3}],[{"l":true,"v":"dGltZQ=="},{"v":"VGltZQ==","f":4}],[{"l":true,"v":"ZHVy"},{"v":"RHVy","f":5}],[{"l":true,"v":"c3RyaW5n"},{"v":"U3RyaW5n"},{"l":true,"v":"aW50"},{"v":"SW50","f":1}],[{"l":true,"v":"c3RyaW5n"},{"v":"U3RyaW5n"},{"l":true,"v":"dGltZQ=="},{"v":"VGltZQ==","f":4}],[{"l":true,"v":"bmVlZA=="},{"v":"U3RyaW5n"},{"l":true,"v":"c2luY2U="},{"v":"VGltZQ==","f":4}]]}],"n":{"w":{"dur":{"c":[2],"s":2,"ds":1},"float":{"c":[2],"s":2,"ds":1},"int":{"c":[4],"s":4,"ds":2},"need":{"c":[1],"s":1,"ds":1},"since":{"c":[1],"s":1,"ds":1},"string":{"c":[7],"s":7,"ds":4},"time":{"c":[5],"s":5,"ds":3},"uint":{"c":[2],"s":2,"ds":1}},"c":[9],"p":[1],"d":9,"v":8},"o":"VHJhaW5pbmc6CglNb2RlbDogTXVsdGlub21pYWwgTmHDr3ZlIEJheWVzCglDbGFzc2VzOiAxClRyYWluaW5nIENvbXBsZXRlZC4KaCjOuCkgPSBhcmdtYXhfY3tsb2coUCh5ID0gYykpICsgzqNsb2coUCh4fHkgPSBjKSl9CglDbGFzc2VzOiAxCglEb2N1bWVudHMgZXZhbHVhdGVkIGluIG1vZGVsOiA5CglXb3JkcyBldmFsdWF0ZWQgaW4gbW9kZWw6IDgKCgo="}`
+const savedNL = `{"m":[{"t":"T","e":[[{"l":true,"v":"c3RyaW5n"},{"v":"U3RyaW5n"}],[{"l":true,"v":"aW50"},{"v":"SW50","f":1}],[{"l":true,"v":"dWludA=="},{"v":"VWludA==","f":2}],[{"l":true,"v":"ZmxvYXQ="},{"v":"RmxvYXQ=","f":3}],[{"l":true,"v":"dGltZQ=="},{"v":"VGltZQ==","f":4}],[{"l":true,"v":"ZHVy"},{"v":"RHVy","f":5}],[{"l":true,"v":"c3RyaW5n"},{"v":"U3RyaW5n"},{"l":true,"v":"aW50"},{"v":"SW50","f":1}],[{"l":true,"v":"c3RyaW5n"},{"v":"U3RyaW5n"},{"l":true,"v":"dGltZQ=="},{"v":"VGltZQ==","f":4}],[{"l":true,"v":"bmVlZA=="},{"v":"U3RyaW5n"},{"l":true,"v":"c2luY2U="},{"v":"VGltZQ==","f":4}]],"s":["c3RyaW5nIHtTdHJpbmd9","aW50IHtJbnR9","dWludCB7VWludH0=","ZmxvYXQge0Zsb2F0fQ==","dGltZSB7VGltZX0=","ZHVyIHtEdXJ9","c3RyaW5nIHtTdHJpbmd9IGludCB7SW50fQ==","c3RyaW5nIHtTdHJpbmd9IHRpbWUge1RpbWV9","bmVlZCB7U3RyaW5nfSBzaW5jZSB7VGltZX0="]}],"n":{"w":{"dur":{"c":[2],"s":2,"ds":1},"float":{"c":[2],"s":2,"ds":1},"int":{"c":[4],"s":4,"ds":2},"need":{"c":[1],"s":1,"ds":1},"since":{"c":[1],"s":1,"ds":1},"string":{"c":[7],"s":7,"ds":4},"time":{"c":[5],"s":5,"ds":3},"uint":{"c":[2],"s":2,"ds":1}},"c":[9],"p":[1],"d":9,"v":8},"o":"VHJhaW5pbmc6CglNb2RlbDogTXVsdGlub21pYWwgTmHDr3ZlIEJheWVzCglDbGFzc2VzOiAxClRyYWluaW5nIENvbXBsZXRlZC4KaCjOuCkgPSBhcmdtYXhfY3tsb2coUCh5ID0gYykpICsgzqNsb2coUCh4fHkgPSBjKSl9CglDbGFzc2VzOiAxCglEb2N1bWVudHMgZXZhbHVhdGVkIGluIG1vZGVsOiA5CglXb3JkcyBldmFsdWF0ZWQgaW4gbW9kZWw6IDgKCgo="}`
 
 func failTest(t *testing.T, err error) {
 	if err != nil {
@@ -49,8 +49,8 @@ func TestNL_P(t *testing.T) {
 	err = nl.Learn()
 	failTest(t, err)
 
-	b, err := nl.Export()
-	failTest(t, err)
+	// b, _ := nl.Export()
+	// fmt.Println(string(b))
 
 	tim, err := time.ParseInLocation("01-02-2006_3:04pm", "05-18-1999_6:42pm", time.Local)
 	failTest(t, err)
@@ -138,19 +138,7 @@ func TestNL_P_Import(t *testing.T) {
 	}
 	nl := New()
 
-	tSamples := []string{
-		"string {String}",
-		"int {Int}",
-		"uint {Uint}",
-		"float {Float}",
-		"time {Time}",
-		"dur {Dur}",
-		"string {String} int {Int}",
-		"string {String} time {Time}",
-		"need {String} since {Time}",
-	}
-
-	err := nl.RegisterModel(T{}, tSamples)
+	err := nl.RegisterModel(T{}, []string{})
 	failTest(t, err)
 
 	err = nl.Import([]byte(savedNL))

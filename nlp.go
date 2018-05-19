@@ -12,8 +12,6 @@ import (
 
 	"encoding/json"
 
-	"strings"
-
 	"github.com/cdipaolo/goml/base"
 	"github.com/cdipaolo/goml/text"
 	"github.com/itrabbit/nlp/parser"
@@ -50,6 +48,7 @@ type itemSaved struct {
 type modelSaved struct {
 	Type     string        `json:"t"`
 	Expected [][]itemSaved `json:"e"`
+	Samples  [][]byte      `json:"s"`
 }
 
 // For save load alg
@@ -60,7 +59,7 @@ type nlSaved struct {
 }
 
 func (n nlSaved) indexOfModelByType(tpy reflect.Type) int {
-	t := strings.Join([]string{tpy.PkgPath(), tpy.Name()}, ".")
+	t := tpy.Name()
 	for i, model := range n.Models {
 		if model.Type == t {
 			return i
@@ -123,7 +122,8 @@ func (nl NL) Export() ([]byte, error) {
 			e[j] = sub
 		}
 		models[i].Expected = e
-		models[i].Type = strings.Join([]string{model.tpy.PkgPath(), model.tpy.Name()}, ".")
+		models[i].Samples = model.samples
+		models[i].Type = model.tpy.Name()
 	}
 	m := map[string]interface{}{
 		"n": &naive,
@@ -175,6 +175,7 @@ func (nl *NL) Import(p []byte) error {
 			}
 			model.expected[i] = a
 		}
+		model.samples = savedModel.Samples
 	}
 	return nil
 }
@@ -235,8 +236,8 @@ type item struct {
 }
 
 type field struct {
-	index int    `json:"i"`
-	name  string `j`
+	index int
+	name  string
 	kind  interface{}
 }
 
