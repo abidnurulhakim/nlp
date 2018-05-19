@@ -1,10 +1,4 @@
-[![GoDoc](https://godoc.org/github.com/shixzie/nlp?status.svg)](https://godoc.org/github.com/shixzie/nlp) 
-[![Go Report Card](https://goreportcard.com/badge/github.com/shixzie/nlp)](https://goreportcard.com/report/github.com/shixzie/nlp)
-[![Build Status](https://travis-ci.org/shixzie/nlp.svg?branch=master)](https://travis-ci.org/shixzie/nlp)
-[![codecov](https://codecov.io/gh/shixzie/nlp/branch/master/graph/badge.svg)](https://codecov.io/gh/shixzie/nlp)
-
-
-# nlp
+# NLP
 
 > `nlp` is a general purpose any-lang Natural Language Processor that parses the data inside a text and returns a filled model
 
@@ -21,7 +15,7 @@ time.Duration
 ## Installation
 ```
 // go1.8+ is required
-go get -u github.com/shixzie/nlp
+go get -u github.com/itrabbit/nlp
 ```
 
 

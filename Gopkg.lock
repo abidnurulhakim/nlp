@@ -4,14 +4,27 @@
 [[projects]]
   branch = "master"
   name = "github.com/cdipaolo/goml"
-  packages = ["base","text"]
+  packages = [
+    "base",
+    "text"
+  ]
   revision = "e2d8def04c9a19893aba223c21899c77089651ee"
 
 [[projects]]
   name = "github.com/mna/pigeon"
-  packages = [".","ast","builder"]
+  packages = [
+    ".",
+    "ast",
+    "builder"
+  ]
   revision = "9df264905d4734c0133161d8c67828ff522b154a"
   version = "v1.0.0"
+
+[[projects]]
+  name = "github.com/shixzie/nlp"
+  packages = ["parser"]
+  revision = "3ba1f328b94e19fd81fbe7e1f1b75c97ea4996fa"
+  version = "0.1.9"
 
 [[projects]]
   branch = "master"
@@ -22,6 +35,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "acd00ef0af5095f120392b70a2a271a964dfe7640bb75904b235a252ae866d2f"
+  inputs-digest = "207976f669807d41df8f0abaa3b16f8487fc0e0435f82a3d1416080b08e31818"
   solver-name = "gps-cdcl"
   solver-version = 1

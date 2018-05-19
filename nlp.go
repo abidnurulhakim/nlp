@@ -10,9 +10,13 @@ import (
 	"time"
 	"unicode"
 
+	"encoding/json"
+
+	"strings"
+
 	"github.com/cdipaolo/goml/base"
 	"github.com/cdipaolo/goml/text"
-	"github.com/shixzie/nlp/parser"
+	"github.com/itrabbit/nlp/parser"
 )
 
 // NL is a Natural Language Processor
@@ -24,8 +28,156 @@ type NL struct {
 	Output *bytes.Buffer
 }
 
+// Structures for Export/Import
+type wordSaved struct {
+	Count    []uint64 `json:"c"`
+	Seen     uint64   `json:"s"`
+	DocsSeen uint64   `json:"ds"`
+}
+type naiveBayesSaved struct {
+	Words         map[string]wordSaved   `json:"w"`
+	Count         []uint64               `json:"c"`
+	Probabilities []float64              `json:"p"`
+	DocumentCount uint64                 `json:"d"`
+	DictCount     uint64                 `json:"v"`
+	Tokenizer     map[string]interface{} `json:"t,omitempty"`
+}
+type itemSaved struct {
+	Limit      bool   `json:"l,omitempty"`
+	Value      []byte `json:"v,omitempty"`
+	FieldIndex int    `json:"f,omitempty"`
+}
+type modelSaved struct {
+	Type     string        `json:"t"`
+	Expected [][]itemSaved `json:"e"`
+}
+
+// For save load alg
+type nlSaved struct {
+	Models     []modelSaved    `json:"m,omitempty"`
+	NaiveBayes naiveBayesSaved `json:"n,omitempty"`
+	Output     []byte          `json:"o,omitempty"`
+}
+
+func (n nlSaved) indexOfModelByType(tpy reflect.Type) int {
+	t := strings.Join([]string{tpy.PkgPath(), tpy.Name()}, ".")
+	for i, model := range n.Models {
+		if model.Type == t {
+			return i
+		}
+	}
+	return -1
+}
+
 // New returns a *NL
 func New() *NL { return &NL{Output: bytes.NewBufferString("")} }
+
+// Export
+func (nl NL) Export() ([]byte, error) {
+	naive := naiveBayesSaved{
+		Words:         make(map[string]wordSaved),
+		Count:         nl.naive.Count,
+		Probabilities: nl.naive.Probabilities,
+		DocumentCount: nl.naive.DocumentCount,
+		DictCount:     nl.naive.DictCount,
+	}
+	v := reflect.Indirect(reflect.ValueOf(nl.naive.Words))
+	words := reflect.Indirect(v.FieldByName("words"))
+	if words.Kind() == reflect.Map {
+		for _, key := range words.MapKeys() {
+			value := words.MapIndex(key)
+			if !value.IsValid() {
+				continue
+			}
+			if value.Kind() != reflect.Struct {
+				continue
+			}
+			s := value.FieldByName("Seen").Uint()
+			ds := value.FieldByName("DocsSeen").Uint()
+			c := make([]uint64, 0)
+			countVal := reflect.Indirect(value.FieldByName("Count"))
+			if countVal.Kind() == reflect.Slice || countVal.Kind() == reflect.Array {
+				for i := 0; i < countVal.Len(); i++ {
+					c = append(c, countVal.Index(i).Uint())
+				}
+			}
+			naive.Words[key.String()] = wordSaved{
+				Count:    c,
+				Seen:     s,
+				DocsSeen: ds,
+			}
+		}
+	}
+	models := make([]modelSaved, len(nl.models), len(nl.models))
+	for i, model := range nl.models {
+		e := make([][]itemSaved, len(model.expected), len(model.expected))
+		for j, arr := range model.expected {
+			sub := make([]itemSaved, len(arr), len(arr))
+			for y, item := range arr {
+				sub[y] = itemSaved{
+					Limit:      item.limit,
+					Value:      item.value,
+					FieldIndex: item.field.index,
+				}
+			}
+			e[j] = sub
+		}
+		models[i].Expected = e
+		models[i].Type = strings.Join([]string{model.tpy.PkgPath(), model.tpy.Name()}, ".")
+	}
+	m := map[string]interface{}{
+		"n": &naive,
+		"m": models,
+		"o": nl.Output.Bytes(),
+	}
+	return json.Marshal(&m)
+}
+
+// Import
+func (nl *NL) Import(p []byte) error {
+	s := nlSaved{}
+	if err := json.Unmarshal(p, &s); err != nil {
+		return err
+	}
+	nl.naive = text.NewNaiveBayes(nil, uint8(len(nl.models)), base.OnlyWordsAndNumbers)
+	for k, v := range s.NaiveBayes.Words {
+		nl.naive.Words.Set(k, text.Word{
+			Count:    v.Count,
+			Seen:     v.Seen,
+			DocsSeen: v.DocsSeen,
+		})
+	}
+	nl.naive.DictCount = s.NaiveBayes.DictCount
+	nl.naive.DocumentCount = s.NaiveBayes.DocumentCount
+	nl.naive.Probabilities = s.NaiveBayes.Probabilities
+	nl.naive.Count = s.NaiveBayes.Count
+	nl.Output = &bytes.Buffer{}
+	nl.Output.Write(s.Output)
+	nl.naive.Output = nl.Output
+	if len(nl.models) != len(s.Models) {
+		return fmt.Errorf("invalid models")
+	}
+	for _, model := range nl.models {
+		index := s.indexOfModelByType(model.tpy)
+		if index < 0 {
+			continue
+		}
+		savedModel := s.Models[index]
+		model.expected = make([][]item, len(savedModel.Expected), len(savedModel.Expected))
+		for i, arr := range savedModel.Expected {
+			a := make([]item, len(arr), len(arr))
+			for j, obj := range arr {
+				a[j] = item{
+					limit: obj.Limit,
+					value: obj.Value,
+					field: model.fields[obj.FieldIndex],
+				}
+			}
+			model.expected[i] = a
+		}
+	}
+	return nil
+}
 
 // P proccesses the expr and returns one of
 // the types passed as the i parameter to the RegistryModel
@@ -83,8 +235,8 @@ type item struct {
 }
 
 type field struct {
-	index int
-	name  string
+	index int    `json:"i"`
+	name  string `j`
 	kind  interface{}
 }
 
@@ -127,9 +279,9 @@ func (nl *NL) RegisterModel(i interface{}, samples []string, ops ...ModelOption)
 	if i == nil {
 		return fmt.Errorf("can't create model from nil value")
 	}
-	if len(samples) == 0 {
-		return fmt.Errorf("samples can't be nil or empty")
-	}
+	//if len(samples) == 0 {
+	// return fmt.Errorf("samples can't be nil or empty")
+	//}
 	tpy, val := reflect.TypeOf(i), reflect.ValueOf(i)
 	if tpy.Kind() == reflect.Struct {
 		mod := &model{
